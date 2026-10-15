@@ -14,7 +14,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Install Dependencies
@@ -29,21 +29,25 @@ jobs:
           pod install
           cd ..
 
-      - name: Build Unsigned IPA
+      - name: Build Unsigned App
         run: |
-          xcodebuild -workspace ios/runningcoachapp.xcworkspace \
+          cd ios
+          xcodebuild -workspace runningcoachapp.xcworkspace \
             -scheme runningcoachapp \
             -configuration Release \
             -sdk iphoneos \
-            -archivePath $RUNNER_TEMP/runningcoachapp.xcarchive \
-            archive \
+            -derivedDataPath $RUNNER_TEMP/build \
+            -destination 'generic/platform=iOS' \
+            build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGN_ENTITLEMENTS=""
 
+      - name: Package into IPA
+        run: |
           mkdir -p $RUNNER_TEMP/Payload
-          cp -r $RUNNER_TEMP/runningcoachapp.xcarchive/Products/Applications/*.app $RUNNER_TEMP/Payload/
-
+          cp -r $RUNNER_TEMP/build/Build/Products/Release-iphoneos/*.app $RUNNER_TEMP/Payload/
           cd $RUNNER_TEMP
           zip -r runningcoachapp-unsigned.ipa Payload
 
